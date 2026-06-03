@@ -2,6 +2,7 @@ package by.darkimpulsepoint.todoapp.service;
 
 
 import by.darkimpulsepoint.todoapp.dao.CommentDAO;
+import by.darkimpulsepoint.todoapp.dao.impl.CommentDAOImpl;
 import by.darkimpulsepoint.todoapp.model.Comment;
 import by.darkimpulsepoint.todoapp.model.User;
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public class CommentService {
     private static final Logger logger = LogManager.getLogger(CommentService.class);
-    private final CommentDAO commentDAO = new CommentDAO();
+    private final CommentDAO commentDAO = new CommentDAOImpl();
 
     public Comment addComment(Long taskId, Long userId, String content) {
         if (content == null || content.isBlank()) {
