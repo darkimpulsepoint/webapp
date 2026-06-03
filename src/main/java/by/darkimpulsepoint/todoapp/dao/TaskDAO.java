@@ -10,11 +10,7 @@ public interface TaskDAO {
     Optional<Task> findById(Long id);
     List<Task> findByUserId(Long userId);
     List<Task> findAll();
-    List<Task> findByStatus(Task.Status status);
     List<Task> findByUserIdAndStatus(Long userId, Task.Status status);
     Task update(Task task);
-    boolean updateStatus(Long id, Task.Status status);
     boolean delete(Long id);
-    long countByUserId(Long userId);
-    long countByStatus(Task.Status status);
 }

@@ -82,7 +82,9 @@ public class TaskService {
             throw new SecurityException("No permission");
         }
         logger.info("Updating status of task {} to {}", taskId, status);
-        return taskDAO.updateStatus(taskId, status);
+        task.setStatus(status);
+        taskDAO.update(task);
+        return true;
     }
 
     public boolean deleteTask(Long taskId, User currentUser) {
@@ -97,16 +99,19 @@ public class TaskService {
 
     public Map<String, Long> getStatistics() {
         Map<String, Long> stats = new HashMap<>();
-        stats.put("total", (long) taskDAO.findAll().size());
+        List<Task> allTasks = taskDAO.findAll();
+        stats.put("total", (long) allTasks.size());
         for (Task.Status s : Task.Status.values()) {
-            stats.put(s.name().toLowerCase(), taskDAO.countByStatus(s));
+            long count = allTasks.stream().filter(t -> t.getStatus() == s).count();
+            stats.put(s.name().toLowerCase(), count);
         }
         return stats;
     }
 
     public Map<String, Long> getStatisticsForUser(Long userId) {
         Map<String, Long> stats = new HashMap<>();
-        stats.put("total", taskDAO.countByUserId(userId));
+        List<Task> userTasks = taskDAO.findByUserId(userId);
+        stats.put("total", (long) userTasks.size());
         for (Task.Status s : Task.Status.values()) {
             stats.put(s.name().toLowerCase(), (long) taskDAO.findByUserIdAndStatus(userId, s).size());
         }

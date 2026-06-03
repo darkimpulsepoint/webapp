@@ -28,7 +28,7 @@ public class AppContextListener implements ServletContextListener {
 
     private void createAdminIfNotExists() {
         UserDAOImpl userDAO = new UserDAOImpl();
-        if (!userDAO.existsByUsername("admin")) {
+        if (userDAO.findByUsername("admin").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");
             admin.setEmail("admin@todoapp.com");

@@ -25,16 +25,11 @@ public class TaskDAOImpl implements TaskDAO {
     private static final String SELECT_BY_ID = BASE_SELECT + " WHERE t.id = ?";
     private static final String SELECT_BY_USER = BASE_SELECT + " WHERE t.user_id = ? ORDER BY t.created_at DESC";
     private static final String SELECT_ALL = BASE_SELECT + " ORDER BY t.created_at DESC";
-    private static final String SELECT_BY_STATUS = BASE_SELECT + " WHERE t.status = ? ORDER BY t.created_at DESC";
     private static final String SELECT_BY_USER_STATUS = BASE_SELECT + " WHERE t.user_id = ? AND t.status = ? ORDER BY t.created_at DESC";
     private static final String UPDATE_TASK =
             "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ?, " +
             "updated_at = CURRENT_TIMESTAMP WHERE id = ?";
-    private static final String UPDATE_STATUS =
-            "UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
     private static final String DELETE_TASK = "DELETE FROM tasks WHERE id = ?";
-    private static final String COUNT_BY_USER = "SELECT COUNT(*) FROM tasks WHERE user_id = ?";
-    private static final String COUNT_BY_STATUS = "SELECT COUNT(*) FROM tasks WHERE status = ?";
 
     @Override
     public Task create(Task task) {
@@ -127,27 +122,6 @@ public class TaskDAOImpl implements TaskDAO {
     }
 
     @Override
-    public List<Task> findByStatus(Task.Status status) {
-        Connection conn = null;
-        List<Task> tasks = new ArrayList<>();
-        try {
-            conn = pool.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SELECT_BY_STATUS)) {
-                ps.setString(1, status.name());
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) tasks.add(mapTask(rs));
-                }
-            }
-            return tasks;
-        } catch (SQLException e) {
-            logger.error("Error finding tasks by status: {}", e.getMessage(), e);
-            throw new RuntimeException("Error finding tasks", e);
-        } finally {
-            pool.releaseConnection(conn);
-        }
-    }
-
-    @Override
     public List<Task> findByUserIdAndStatus(Long userId, Task.Status status) {
         Connection conn = null;
         List<Task> tasks = new ArrayList<>();
@@ -194,26 +168,6 @@ public class TaskDAOImpl implements TaskDAO {
     }
 
     @Override
-    public boolean updateStatus(Long id, Task.Status status) {
-        Connection conn = null;
-        try {
-            conn = pool.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(UPDATE_STATUS)) {
-                ps.setString(1, status.name());
-                ps.setLong(2, id);
-                int rows = ps.executeUpdate();
-                logger.debug("Updated task {} status to {}", id, status);
-                return rows > 0;
-            }
-        } catch (SQLException e) {
-            logger.error("Error updating task status {}: {}", id, e.getMessage(), e);
-            throw new RuntimeException("Error updating task status", e);
-        } finally {
-            pool.releaseConnection(conn);
-        }
-    }
-
-    @Override
     public boolean delete(Long id) {
         Connection conn = null;
         try {
@@ -227,46 +181,6 @@ public class TaskDAOImpl implements TaskDAO {
         } catch (SQLException e) {
             logger.error("Error deleting task {}: {}", id, e.getMessage(), e);
             throw new RuntimeException("Error deleting task", e);
-        } finally {
-            pool.releaseConnection(conn);
-        }
-    }
-
-    @Override
-    public long countByUserId(Long userId) {
-        Connection conn = null;
-        try {
-            conn = pool.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(COUNT_BY_USER)) {
-                ps.setLong(1, userId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) return rs.getLong(1);
-                }
-            }
-            return 0;
-        } catch (SQLException e) {
-            logger.error("Error counting tasks by user: {}", e.getMessage(), e);
-            throw new RuntimeException("Error counting tasks", e);
-        } finally {
-            pool.releaseConnection(conn);
-        }
-    }
-
-    @Override
-    public long countByStatus(Task.Status status) {
-        Connection conn = null;
-        try {
-            conn = pool.getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(COUNT_BY_STATUS)) {
-                ps.setString(1, status.name());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) return rs.getLong(1);
-                }
-            }
-            return 0;
-        } catch (SQLException e) {
-            logger.error("Error counting tasks by status: {}", e.getMessage(), e);
-            throw new RuntimeException("Error counting tasks", e);
         } finally {
             pool.releaseConnection(conn);
         }

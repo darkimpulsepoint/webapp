@@ -26,10 +26,10 @@ public class UserService {
         if (password == null || password.length() < 6) {
             throw new IllegalArgumentException("Password must be at least 6 characters");
         }
-        if (userDAO.existsByUsername(username)) {
+        if (userDAO.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already taken");
         }
-        if (userDAO.existsByEmail(email)) {
+        if (userDAO.findByUsername(email).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
         }
 
@@ -63,21 +63,6 @@ public class UserService {
 
     public List<User> findAll() {
         return userDAO.findAll();
-    }
-
-    public User updateProfile(Long id, String email) {
-        User user = userDAO.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        if (email != null && !email.isBlank()) {
-            if (!email.matches("^[\\w._%+\\-]+@[\\w.\\-]+\\.[a-zA-Z]{2,}$")) {
-                throw new IllegalArgumentException("Invalid email address");
-            }
-            Optional<User> existing = userDAO.findByEmail(email);
-            if (existing.isPresent() && !existing.get().getId().equals(id)) {
-                throw new IllegalArgumentException("Email already in use");
-            }
-            user.setEmail(email);
-        }
-        return userDAO.update(user);
     }
 
     public boolean deleteUser(Long id) {
