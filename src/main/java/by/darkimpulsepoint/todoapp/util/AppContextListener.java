@@ -42,6 +42,6 @@ public class AppContextListener implements ServletContextListener {
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
         logger.info("Application shutting down...");
-        ConnectionPool.getInstance().shutdown();
+        ConnectionPool.getInstance().destroyPool();
     }
 }

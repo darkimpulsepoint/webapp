@@ -6,99 +6,130 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ConnectionPool {
     private static final Logger logger = LogManager.getLogger(ConnectionPool.class);
-    private static ConnectionPool instance;
-    private final BlockingQueue<Connection> pool;
-    private final String url;
-    private final String username;
-    private final String password;
-    private final int poolSize;
+    private static final String PROPERTIES_FILE = "db.properties";
+    private static volatile ConnectionPool instance;
+    private static final Lock lock = new ReentrantLock();
+
+    private final BlockingQueue<Connection> freeConnections;
+    private final BlockingQueue<Connection> givenAwayConnections;
 
     private ConnectionPool() {
-        Properties props = new Properties();
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream("db.properties")) {
-            if (in == null) throw new RuntimeException("db.properties not found in classpath");
-            props.load(in);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load db.properties", e);
-        }
-
-        url = props.getProperty("db.url");
-        username = props.getProperty("db.username");
-        password = props.getProperty("db.password");
-        poolSize = Integer.parseInt(props.getProperty("db.pool.size", "10"));
-
-        try {
-            Class.forName(props.getProperty("db.driver"));
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("PostgreSQL driver not found", e);
-        }
-
-        pool = new ArrayBlockingQueue<>(poolSize);
-        for (int i = 0; i < poolSize; i++) {
-            try {
-                pool.add(createConnection());
-            } catch (SQLException e) {
-                logger.error("Failed to create connection: {}", e.getMessage());
-                throw new RuntimeException("Cannot initialize connection pool", e);
+        Properties properties = new Properties();
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
+            if (inputStream == null) {
+                throw new RuntimeException("Database properties file not found: " + PROPERTIES_FILE);
             }
+            properties.load(inputStream);
+
+            String url = properties.getProperty("db.url");
+            String user = properties.getProperty("db.username");
+            String pass = properties.getProperty("db.password");
+            String driver = properties.getProperty("db.driver");
+            int poolSize = Integer.parseInt(properties.getProperty("db.pool.size", "10"));
+
+            Class.forName(driver);
+
+            freeConnections = new ArrayBlockingQueue<>(poolSize);
+            givenAwayConnections = new ArrayBlockingQueue<>(poolSize);
+
+            for (int i = 0; i < poolSize; i++) {
+                Connection connection = DriverManager.getConnection(url, user, pass);
+                freeConnections.add(connection);
+            }
+
+            logger.info("Connection pool initialized successfully with {} connections", poolSize);
+
+        } catch (IOException | SQLException | ClassNotFoundException e) {
+            logger.fatal("Failed to initialize connection pool", e);
+            throw new RuntimeException("Failed to initialize connection pool", e);
         }
-        logger.info("Connection pool initialized with {} connections", poolSize);
     }
 
-    public static synchronized ConnectionPool getInstance() {
+    public static ConnectionPool getInstance() {
         if (instance == null) {
-            instance = new ConnectionPool();
+            lock.lock();
+            try {
+                if (instance == null) {
+                    instance = new ConnectionPool();
+                }
+            } finally {
+                lock.unlock();
+            }
         }
         return instance;
     }
 
-    private Connection createConnection() throws SQLException {
-        return DriverManager.getConnection(url, username, password);
-    }
-
-    public Connection getConnection() throws SQLException {
+    public Connection getConnection() {
+        Connection connection = null;
         try {
-            Connection conn = pool.take();
-            if (conn.isClosed()) {
-                conn = createConnection();
-            }
-            return conn;
+            connection = freeConnections.take();
+            givenAwayConnections.put(connection);
         } catch (InterruptedException e) {
+            logger.error("Thread was interrupted while waiting for connection", e);
             Thread.currentThread().interrupt();
-            throw new SQLException("Interrupted while waiting for a connection", e);
         }
+        return connection;
     }
 
     public void releaseConnection(Connection connection) {
         if (connection != null) {
             try {
-                if (!connection.isClosed()) {
-                    pool.offer(connection);
+                if (givenAwayConnections.remove(connection)) {
+                    freeConnections.put(connection);
                 } else {
-                    pool.offer(createConnection());
+                    logger.warn("Trying to release a connection that is not in the given away queue!");
                 }
-            } catch (SQLException e) {
-                logger.error("Error releasing connection: {}", e.getMessage());
+            } catch (InterruptedException e) {
+                logger.error("Thread was interrupted while releasing connection", e);
+                Thread.currentThread().interrupt();
             }
         }
     }
 
-    public void shutdown() {
-        for (Connection conn : pool) {
+    public void destroyPool() {
+        int currentSize = freeConnections.size();
+        for (int i = 0; i < currentSize; i++) {
             try {
-                conn.close();
-            } catch (SQLException e) {
-                logger.error("Error closing connection: {}", e.getMessage());
+                Connection connection = freeConnections.take();
+                connection.close();
+            } catch (InterruptedException | SQLException e) {
+                logger.error("Error while closing connection during pool destruction", e);
             }
         }
-        logger.info("Connection pool shut down");
+
+        for (Connection connection : givenAwayConnections) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                logger.error("Error closing given away connection", e);
+            }
+        }
+
+        deregisterDrivers();
+        logger.info("Connection pool destroyed");
+    }
+
+    private void deregisterDrivers() {
+        Enumeration<Driver> drivers = DriverManager.getDrivers();
+        while (drivers.hasMoreElements()) {
+            java.sql.Driver driver = drivers.nextElement();
+            try {
+                DriverManager.deregisterDriver(driver);
+            } catch (SQLException e) {
+                logger.error("Error deregistering driver", e);
+            }
+        }
     }
 }

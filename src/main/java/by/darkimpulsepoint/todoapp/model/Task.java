@@ -68,7 +68,53 @@ public class Task {
     public void setDueDate(LocalDateTime dueDate) { this.dueDate = dueDate; }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Task task = (Task) o;
+
+        if (status != task.status) return false;
+        if (priority != task.priority) return false;
+        if (id != null ? !id.equals(task.id) : task.id != null) return false;
+        if (title != null ? !title.equals(task.title) : task.title != null) return false;
+        if (description != null ? !description.equals(task.description) : task.description != null) return false;
+        if (userId != null ? !userId.equals(task.userId) : task.userId != null) return false;
+        if (username != null ? !username.equals(task.username) : task.username != null) return false;
+        if (createdAt != null ? !createdAt.equals(task.createdAt) : task.createdAt != null) return false;
+        if (updatedAt != null ? !updatedAt.equals(task.updatedAt) : task.updatedAt != null) return false;
+        return dueDate != null ? dueDate.equals(task.dueDate) : task.dueDate == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (priority != null ? priority.hashCode() : 0);
+        result = 31 * result + (userId != null ? userId.hashCode() : 0);
+        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
+        result = 31 * result + (updatedAt != null ? updatedAt.hashCode() : 0);
+        result = 31 * result + (dueDate != null ? dueDate.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
-        return "Task{id=" + id + ", title='" + title + "', status=" + status + ", priority=" + priority + ", userId=" + userId + "}";
+        StringBuilder sb = new StringBuilder("Task{");
+        sb.append("id=").append(id);
+        sb.append(", title='").append(title).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", status=").append(status);
+        sb.append(", priority=").append(priority);
+        sb.append(", userId=").append(userId);
+        sb.append(", username='").append(username).append('\'');
+        sb.append(", createdAt=").append(createdAt);
+        sb.append(", updatedAt=").append(updatedAt);
+        sb.append(", dueDate=").append(dueDate);
+        sb.append('}');
+        return sb.toString();
     }
 }
