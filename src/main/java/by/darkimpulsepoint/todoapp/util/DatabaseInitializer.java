@@ -1,5 +1,6 @@
 package by.darkimpulsepoint.todoapp.util;
 
+import by.darkimpulsepoint.todoapp.pool.ConnectionPool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

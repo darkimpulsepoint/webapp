@@ -2,7 +2,7 @@ package by.darkimpulsepoint.todoapp.dao.impl;
 
 import by.darkimpulsepoint.todoapp.dao.CommentDAO;
 import by.darkimpulsepoint.todoapp.model.Comment;
-import by.darkimpulsepoint.todoapp.util.ConnectionPool;
+import by.darkimpulsepoint.todoapp.pool.ConnectionPool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

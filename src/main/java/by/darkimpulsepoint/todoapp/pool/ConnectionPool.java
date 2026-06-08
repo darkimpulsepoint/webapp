@@ -1,4 +1,4 @@
-package by.darkimpulsepoint.todoapp.util;
+package by.darkimpulsepoint.todoapp.pool;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

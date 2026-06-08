@@ -2,6 +2,7 @@ package by.darkimpulsepoint.todoapp.util;
 
 import by.darkimpulsepoint.todoapp.dao.impl.UserDAOImpl;
 import by.darkimpulsepoint.todoapp.model.User;
+import by.darkimpulsepoint.todoapp.pool.ConnectionPool;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
