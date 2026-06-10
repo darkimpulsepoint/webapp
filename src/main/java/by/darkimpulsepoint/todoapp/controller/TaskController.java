@@ -4,6 +4,8 @@ import by.darkimpulsepoint.todoapp.model.Task;
 import by.darkimpulsepoint.todoapp.model.User;
 import by.darkimpulsepoint.todoapp.service.CommentService;
 import by.darkimpulsepoint.todoapp.service.TaskService;
+import by.darkimpulsepoint.todoapp.service.impl.CommentServiceImpl;
+import by.darkimpulsepoint.todoapp.service.impl.TaskServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,8 +25,8 @@ import java.util.Optional;
         "/tasks/status", "/tasks/view", "/tasks/comment", "/tasks/comment/delete"})
 public class TaskController extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(TaskController.class);
-    private final TaskService taskService = new TaskService();
-    private final CommentService commentService = new CommentService();
+    private final TaskService taskService = new TaskServiceImpl();
+    private final CommentService commentService = new CommentServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

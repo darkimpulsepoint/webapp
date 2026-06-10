@@ -3,6 +3,8 @@ package by.darkimpulsepoint.todoapp.controller;
 import by.darkimpulsepoint.todoapp.model.User;
 import by.darkimpulsepoint.todoapp.service.TaskService;
 import by.darkimpulsepoint.todoapp.service.UserService;
+import by.darkimpulsepoint.todoapp.service.impl.TaskServiceImpl;
+import by.darkimpulsepoint.todoapp.service.impl.UserServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,8 +19,8 @@ import java.util.List;
 @WebServlet(urlPatterns = {"/admin/users", "/admin/users/delete"})
 public class AdminController extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(AdminController.class);
-    private final UserService userService = new UserService();
-    private final TaskService taskService = new TaskService();
+    private final UserService userService = new UserServiceImpl();
+    private final TaskService taskService = new TaskServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

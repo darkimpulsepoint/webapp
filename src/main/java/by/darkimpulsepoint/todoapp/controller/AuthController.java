@@ -2,6 +2,7 @@ package by.darkimpulsepoint.todoapp.controller;
 
 import by.darkimpulsepoint.todoapp.model.User;
 import by.darkimpulsepoint.todoapp.service.UserService;
+import by.darkimpulsepoint.todoapp.service.impl.UserServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,7 +18,7 @@ import java.util.Optional;
 @WebServlet(urlPatterns = {"/login", "/logout", "/register"})
 public class AuthController extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(AuthController.class);
-    private final UserService userService = new UserService();
+    private final UserService userService = new UserServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
